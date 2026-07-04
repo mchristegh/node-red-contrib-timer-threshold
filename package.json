@@ -9,16 +9,19 @@
         "debounce",
         "counter",
         "sliding window",
-        "cooldown",
         "sensor",
         "filter"
     ],
     "license": "Apache-2.0",
     "author": "mchristegh",
+    "scripts": {
+        "test": "node test-harness.js",
+        "prepublishOnly": "node test-harness.js"
+    },
     "node-red": {
         "version": ">=2.0.0",
         "nodes": {
-            "timer-threshold": "timer-threshold.js"
+            "timer-threshold": "timer-threshold/timer-threshold.js"
         }
     },
     "engines": {
