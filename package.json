@@ -2,18 +2,26 @@
     "name": "node-red-contrib-timer-threshold",
     "version": "0.1.0",
     "description": "A Node-RED node that triggers an output after a configured number of messages arrive within a fixed or sliding time window. Suppresses false positives from sensor noise by requiring repeated threshold breaches before acting. Sibling of timer-events, sharing its event envelope and command conventions.",
+    "dependencies": {},
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/mchristegh/node-red-contrib-timer-threshold/"
+    },
+    "license": "Apache-2.0",
     "keywords": [
         "node-red",
         "timer",
         "threshold",
         "debounce",
         "counter",
+        "cooldown",
         "sliding window",
         "sensor",
         "filter"
     ],
-    "license": "Apache-2.0",
-    "author": "mchristegh",
+    "engines": {
+      "node": ">=12.0.0"
+    },
     "scripts": {
         "test": "node test-harness.js",
         "prepublishOnly": "node test-harness.js"
@@ -24,7 +32,5 @@
             "timer-threshold": "timer-threshold/timer-threshold.js"
         }
     },
-    "engines": {
-        "node": ">=12.0.0"
-    }
+    "author": "mchristegh"
 }
