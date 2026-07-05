@@ -23,8 +23,8 @@
       "node": ">=12.0.0"
     },
     "scripts": {
-        "test": "node test-harness.js",
-        "prepublishOnly": "node test-harness.js"
+        "test": "node test-scripts/test-harness.js",
+        "prepublishOnly": "node test-scripts/test-harness.js"
     },
     "node-red": {
         "version": ">=2.0.0",
