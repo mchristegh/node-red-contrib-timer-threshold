@@ -24,11 +24,11 @@ consistent envelope describing the node's full state at that moment.
 
 ## Outputs
 
-| # | Output | Fires on |
-|---|--------|----------|
-| 1 | **Trigger** | The count reaching the limit within the window. Nothing else. |
-| 2 | **Query**   | An incoming `query` message, or a Heartbeat tick. |
-| 3 | **Events**  | Every event, including a copy of every Trigger and every ignored/blocked message. |
+| #   | Output      | Fires on                                                                          |
+| --- | ----------- | --------------------------------------------------------------------------------- |
+| 1   | **Trigger** | The count reaching the limit within the window. Nothing else.                     |
+| 2   | **Query**   | An incoming `query` message, or a Heartbeat tick.                                 |
+| 3   | **Events**  | Every event, including a copy of every Trigger and every ignored/blocked message. |
 
 Output 1 never carries a blocked or redundant message — anything that
 didn't truly happen appears only on output 3, tagged `msg.ignored: true`.

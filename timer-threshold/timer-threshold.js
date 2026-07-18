@@ -28,7 +28,7 @@
  * limitations under the License.
  **/
 
-module.exports = function(RED) {
+module.exports = function (RED) {
   "use strict";
 
   // ---------------------------------------------------------------------------
@@ -36,9 +36,9 @@ module.exports = function(RED) {
   // ---------------------------------------------------------------------------
 
   const TIMER_STATE = {
-    IDLE:     "idle",
+    IDLE: "idle",
     COUNTING: "counting",
-    COOLDOWN: "cooldown"
+    COOLDOWN: "cooldown",
   };
 
   // Canonical event-type list for output 3 (and output 2, for QUERY).
@@ -49,18 +49,18 @@ module.exports = function(RED) {
   // transition (fixed: the shared window expired; sliding: the last live
   // message aged out); msg.windowMode distinguishes them if needed.
   const TIMER_EVENT = {
-    COUNTED:         "counted",
-    TRIGGERED:       "triggered",
-    WINDOWEXPIRED:   "windowexpired",
-    STOPPED:         "stopped",
-    RESET:           "reset",
-    DISABLED:        "disabled",
-    ENABLED:         "enabled",
-    COUNTLIMITSET:   "countlimitset",
-    WINDOWSET:       "windowset",
-    QUERY:           "query",
+    COUNTED: "counted",
+    TRIGGERED: "triggered",
+    WINDOWEXPIRED: "windowexpired",
+    STOPPED: "stopped",
+    RESET: "reset",
+    DISABLED: "disabled",
+    ENABLED: "enabled",
+    COUNTLIMITSET: "countlimitset",
+    WINDOWSET: "windowset",
+    QUERY: "query",
     COOLDOWNSTARTED: "cooldownstarted",
-    COOLDOWNENDED:   "cooldownended"
+    COOLDOWNENDED: "cooldownended",
   };
 
   // Identifies whether an event was triggered by a live incoming message
@@ -69,52 +69,52 @@ module.exports = function(RED) {
   // heartbeat tick.
   const EVENT_SOURCE = {
     EXTERNAL: "external",
-    INTERNAL: "internal"
+    INTERNAL: "internal",
   };
 
   const WINDOW_MODE = {
-    FIXED:   "fixed",
-    SLIDING: "sliding"
+    FIXED: "fixed",
+    SLIDING: "sliding",
   };
 
   const UNITS = {
     MILLISECOND: "Millisecond",
-    SECOND:      "Second",
-    MINUTE:      "Minute",
-    HOUR:        "Hour"
+    SECOND: "Second",
+    MINUTE: "Minute",
+    HOUR: "Hour",
   };
 
   const UNITS_INPUT = {
     MILLISECOND: "millisecond",
-    SECOND:      "second",
-    MINUTE:      "minute",
-    HOUR:        "hour"
+    SECOND: "second",
+    MINUTE: "minute",
+    HOUR: "hour",
   };
 
   const PAYLOAD = {
-    STOP:          "stop",
-    RESET:         "reset",
-    QUERY:         "query",
-    DISABLE:       "disable",
-    ENABLE:        "enable",
+    STOP: "stop",
+    RESET: "reset",
+    QUERY: "query",
+    DISABLE: "disable",
+    ENABLE: "enable",
     SETCOUNTLIMIT: "setcountlimit",
-    SETWINDOW:     "setwindow"
+    SETWINDOW: "setwindow",
   };
 
   const REPORTING_FORMAT = {
-    HUMAN:   "human",
+    HUMAN: "human",
     SECONDS: "seconds",
     MINUTES: "minutes",
-    HOURS:   "hours"
+    HOURS: "hours",
   };
 
   // Reporting only drives the node's status label (see startWindowReporting).
   // It never produces an output message - that role is served by the query
   // output (manual query or heartbeat tick).
   const REPORTING = {
-    NONE:                "none",
-    EVERY_SECOND:        "every_second",
-    LAST_MINUTE_SECONDS: "last_minute_seconds"
+    NONE: "none",
+    EVERY_SECOND: "every_second",
+    LAST_MINUTE_SECONDS: "last_minute_seconds",
   };
 
   // How long the "Triggered" status flash stays on the canvas before the
@@ -127,34 +127,53 @@ module.exports = function(RED) {
 
   function TimerThreshold(n) {
     RED.nodes.createNode(this, n);
-    let fs   = require('fs');
-    let path = require('path');
+    const fs = require("fs");
+    const path = require("path");
     let nodefile = n.id.toString();
     let nodepath = "";
-    require('./cycle.js');
+    require("./cycle.js");
 
     if (n._alias != null) {
       nodepath = n._flow.path.replace(/\//g, "-") + "-";
       nodefile = n._alias;
     }
 
-    const thresholdFile = path.join(RED.settings.userDir, "timerthreshold-timers", nodepath + nodefile);
+    const thresholdFile = path.join(
+      RED.settings.userDir,
+      "timerthreshold-timers",
+      nodepath + nodefile,
+    );
 
     // -------------------------------------------------------------------------
     // Node property initialization
     // -------------------------------------------------------------------------
 
-    this.windowunits     = n.windowunits || UNITS.MINUTE;
-    this.windowType      = n.windowType;
-    this.window          = isNaN(Number(RED.util.evaluateNodeProperty(n.window, this.windowType, this, null))) ? 15 : Number(RED.util.evaluateNodeProperty(n.window, this.windowType, this, null));
-    this.windowmode      = n.windowmode || WINDOW_MODE.FIXED;
-    this.countlimit      = (!isNaN(Number(n.countlimit)) && Number(n.countlimit) >= 1) ? Math.floor(Number(n.countlimit)) : 3;
-    this.reporting       = n.reporting       || REPORTING.NONE;
+    this.windowunits = n.windowunits || UNITS.MINUTE;
+    this.windowType = n.windowType;
+    this.window = isNaN(
+      Number(
+        RED.util.evaluateNodeProperty(n.window, this.windowType, this, null),
+      ),
+    )
+      ? 15
+      : Number(
+          RED.util.evaluateNodeProperty(n.window, this.windowType, this, null),
+        );
+    this.windowmode = n.windowmode || WINDOW_MODE.FIXED;
+    this.countlimit =
+      !isNaN(Number(n.countlimit)) && Number(n.countlimit) >= 1
+        ? Math.floor(Number(n.countlimit))
+        : 3;
+    this.reporting = n.reporting || REPORTING.NONE;
     this.reportingformat = n.reportingformat || REPORTING_FORMAT.HUMAN;
-    this.persist         = n.persist         || false;
-    this.cooldownduration       = isNaN(Number(n.cooldownduration))  ? 0 : Number(n.cooldownduration);
-    this.cooldownunits          = n.cooldownunits || UNITS.SECOND;
-    this.heartbeatinterval      = isNaN(Number(n.heartbeatinterval)) ? 0 : Number(n.heartbeatinterval);
+    this.persist = n.persist || false;
+    this.cooldownduration = isNaN(Number(n.cooldownduration))
+      ? 0
+      : Number(n.cooldownduration);
+    this.cooldownunits = n.cooldownunits || UNITS.SECOND;
+    this.heartbeatinterval = isNaN(Number(n.heartbeatinterval))
+      ? 0
+      : Number(n.heartbeatinterval);
     this.heartbeatintervalunits = n.heartbeatintervalunits || UNITS.SECOND;
 
     if (this.window <= 0) {
@@ -162,10 +181,12 @@ module.exports = function(RED) {
       this.windowunits = UNITS.MINUTE;
     }
     if (this.windowunits === UNITS.SECOND) this.window = this.window * 1000;
-    if (this.windowunits === UNITS.MINUTE) this.window = this.window * 1000 * 60;
-    if (this.windowunits === UNITS.HOUR)   this.window = this.window * 1000 * 60 * 60;
+    if (this.windowunits === UNITS.MINUTE)
+      this.window = this.window * 1000 * 60;
+    if (this.windowunits === UNITS.HOUR)
+      this.window = this.window * 1000 * 60 * 60;
 
-    let node = this;
+    const node = this;
 
     // -------------------------------------------------------------------------
     // Runtime state variables
@@ -177,54 +198,54 @@ module.exports = function(RED) {
     // counted message. In fixed mode the first entry anchors the shared
     // window; in sliding mode each entry ages out individually,
     // effectiveWindowMS after its own arrival.
-    let timestamps            = [];
+    let timestamps = [];
 
     // Effective (runtime-overridable) copies of the configured limit and
     // window - the setcountlimit/setwindow commands write here, never to
     // the node config itself.
-    let effectiveCountLimit   = this.countlimit;
-    let effectiveWindowMS     = this.window;
+    let effectiveCountLimit = this.countlimit;
+    let effectiveWindowMS = this.window;
 
-    let timerState            = TIMER_STATE.IDLE;
-    let disabled              = false;
-    let ignoredCount          = 0;
-    let lastIgnoredTime       = null;
-    let originalMsg           = null;   // last counted message; reused as the payload base
-                                         // for events with no live triggering msg of their
-                                         // own (window expiry, cooldown transitions,
-                                         // heartbeat ticks, persisted restores)
+    let timerState = TIMER_STATE.IDLE;
+    let disabled = false;
+    let ignoredCount = 0;
+    let lastIgnoredTime = null;
+    let originalMsg = null; // last counted message; reused as the payload base
+    // for events with no live triggering msg of their
+    // own (window expiry, cooldown transitions,
+    // heartbeat ticks, persisted restores)
 
     // Window timer - fires at the "next transition moment": the window's
     // end in fixed mode, or the oldest live message's age-out in sliding
     // mode (where it is then re-armed after each decay).
-    let windowTimeout              = null;
-    let actualWindowDelayInUse     = 0;
+    let windowTimeout = null;
+    let actualWindowDelayInUse = 0;
     let actualWindowDelayRemaining = 0;
 
     // Reporting (status label only)
-    let reportInterval        = null;
-    let reportMiniTimeout     = null;
+    let reportInterval = null;
+    let reportMiniTimeout = null;
     let windowRemainingDisplay = 0;
-    let reporting             = this.reporting;
-    let reportingformat       = this.reportingformat;
+    let reporting = this.reporting;
+    let reportingformat = this.reportingformat;
 
     // Heartbeat - fixed schedule, independent of everything else
-    let heartbeatTimer        = null;
+    let heartbeatTimer = null;
 
     // Trigger status flash
-    let statusFlashTimeout    = null;
+    let statusFlashTimeout = null;
 
     // Cooldown - a self-expiring, timed block on counting that begins
     // automatically after a genuine Trigger. Deliberately kept on its own
     // timer handles, fully independent of the window timers, so
     // clearWindowTimers() (used freely elsewhere) can never accidentally
     // interrupt an in-progress cooldown.
-    let cooldownActive               = false;
-    let cooldownRemainingDisplay     = 0;
-    let cooldownTimeout              = null;
-    let cooldownReportInterval       = null;
-    let cooldownReportMiniTimeout    = null;
-    let actualCooldownDelayInUse     = 0;
+    let cooldownActive = false;
+    let cooldownRemainingDisplay = 0;
+    let cooldownTimeout = null;
+    let cooldownReportInterval = null;
+    let cooldownReportMiniTimeout = null;
+    let actualCooldownDelayInUse = 0;
     let actualCooldownDelayRemaining = 0;
 
     // -------------------------------------------------------------------------
@@ -234,36 +255,58 @@ module.exports = function(RED) {
     if (this.persist === true) {
       try {
         if (fs.existsSync(thresholdFile)) {
-          let savedState = JSON.retrocycle(JSON.parse(readState()));
-          let nowMS      = (new Date()).getTime();
+          const savedState = JSON.retrocycle(JSON.parse(readState()));
+          const nowMS = new Date().getTime();
 
-          this.reporting       = typeof savedState.reporting !== 'undefined' ? savedState.reporting.toString() : this.reporting;
-          this.reportingformat = typeof savedState.reportingformat !== 'undefined' ? savedState.reportingformat.toString() : this.reportingformat;
-          reporting            = this.reporting;
-          reportingformat      = this.reportingformat;
+          this.reporting =
+            typeof savedState.reporting !== "undefined"
+              ? savedState.reporting.toString()
+              : this.reporting;
+          this.reportingformat =
+            typeof savedState.reportingformat !== "undefined"
+              ? savedState.reportingformat.toString()
+              : this.reportingformat;
+          reporting = this.reporting;
+          reportingformat = this.reportingformat;
 
-          if (typeof savedState.disabled            !== 'undefined') disabled            = savedState.disabled;
-          if (typeof savedState.ignoredCount        !== 'undefined') ignoredCount        = savedState.ignoredCount;
-          if (typeof savedState.lastIgnoredTime     !== 'undefined' && savedState.lastIgnoredTime !== null) {
+          if (typeof savedState.disabled !== "undefined")
+            disabled = savedState.disabled;
+          if (typeof savedState.ignoredCount !== "undefined")
+            ignoredCount = savedState.ignoredCount;
+          if (
+            typeof savedState.lastIgnoredTime !== "undefined" &&
+            savedState.lastIgnoredTime !== null
+          ) {
             lastIgnoredTime = new Date(savedState.lastIgnoredTime);
           }
-          if (typeof savedState.effectiveCountLimit !== 'undefined') effectiveCountLimit = savedState.effectiveCountLimit;
-          if (typeof savedState.effectiveWindowMS   !== 'undefined') effectiveWindowMS   = savedState.effectiveWindowMS;
-          if (typeof savedState.origmsg             !== 'undefined') originalMsg         = savedState.origmsg;
+          if (typeof savedState.effectiveCountLimit !== "undefined")
+            effectiveCountLimit = savedState.effectiveCountLimit;
+          if (typeof savedState.effectiveWindowMS !== "undefined")
+            effectiveWindowMS = savedState.effectiveWindowMS;
+          if (typeof savedState.origmsg !== "undefined")
+            originalMsg = savedState.origmsg;
 
-          if (savedState.cooldownActive === true && typeof savedState.cooldownTarget !== 'undefined') {
+          if (
+            savedState.cooldownActive === true &&
+            typeof savedState.cooldownTarget !== "undefined"
+          ) {
             // -- Cooldown restore --------------------------------------------
-            let remainingMS = (new Date(savedState.cooldownTarget.toString())).getTime() - nowMS;
-            if (remainingMS <= 0) remainingMS = (Math.floor((Math.random() * 5) + 3) * 1000);
-            cooldownActive           = true;
+            let remainingMS =
+              new Date(savedState.cooldownTarget.toString()).getTime() - nowMS;
+            if (remainingMS <= 0)
+              remainingMS = Math.floor(Math.random() * 5 + 3) * 1000;
+            cooldownActive = true;
             cooldownRemainingDisplay = remainingMS;
-            timerState               = TIMER_STATE.COOLDOWN;
+            timerState = TIMER_STATE.COOLDOWN;
             refreshStatus();
             startCooldownTimeout();
             startCooldownReporting();
             // Heartbeat restarts fresh after a restore - does not recalculate original schedule
             startHeartbeat();
-          } else if (savedState.timerState === TIMER_STATE.COUNTING && Array.isArray(savedState.timestamps)) {
+          } else if (
+            savedState.timerState === TIMER_STATE.COUNTING &&
+            Array.isArray(savedState.timestamps)
+          ) {
             // -- Counting restore --------------------------------------------
             // A restore never fires the Trigger output, even if the restored
             // count already meets the limit - Trigger only ever fires on a
@@ -273,7 +316,9 @@ module.exports = function(RED) {
 
             if (node.windowmode === WINDOW_MODE.SLIDING) {
               // Messages that aged out during downtime simply fall away.
-              timestamps = timestamps.filter(function(t) { return (t + effectiveWindowMS) > nowMS; });
+              timestamps = timestamps.filter(function (t) {
+                return t + effectiveWindowMS > nowMS;
+              });
               if (timestamps.length === 0) {
                 timerState = TIMER_STATE.IDLE;
                 refreshStatus();
@@ -284,7 +329,7 @@ module.exports = function(RED) {
                 startHeartbeat();
               }
             } else {
-              let remainingMS = (timestamps[0] + effectiveWindowMS) - nowMS;
+              const remainingMS = timestamps[0] + effectiveWindowMS - nowMS;
               if (remainingMS <= 0) {
                 // Window already expired during downtime - settle to idle
                 // silently (no retroactive WINDOWEXPIRED).
@@ -296,7 +341,7 @@ module.exports = function(RED) {
                   // Same anti-flood rule as timer-events: randomize a
                   // nearly-expired window to 3-8 seconds by shifting the
                   // anchor so dependent nodes have time to initialize.
-                  let randMS = (Math.floor((Math.random() * 5) + 3) * 1000);
+                  const randMS = Math.floor(Math.random() * 5 + 3) * 1000;
                   timestamps[0] = nowMS + randMS - effectiveWindowMS;
                 }
                 timerState = TIMER_STATE.COUNTING;
@@ -316,7 +361,12 @@ module.exports = function(RED) {
           refreshStatus();
         }
       } catch (error) {
-        this.error("Error processing persistent file data for timer-threshold node " + n.id.toString() + "\n\n" + error.toString());
+        this.error(
+          "Error processing persistent file data for timer-threshold node " +
+            n.id.toString() +
+            "\n\n" +
+            error.toString(),
+        );
       }
     } else {
       deleteState();
@@ -327,11 +377,11 @@ module.exports = function(RED) {
     // Event listeners
     // -------------------------------------------------------------------------
 
-    this.on("input", function(msg) {
+    this.on("input", function (msg) {
       handleInputEvent(msg);
     });
 
-    this.on("close", function(removed, done) {
+    this.on("close", function (removed, done) {
       clearWindowTimers();
       clearCooldownTimers();
       stopHeartbeat();
@@ -347,25 +397,35 @@ module.exports = function(RED) {
     // -------------------------------------------------------------------------
 
     function buildStatus(state) {
-      let baseText = "";
-      let fill     = "green";
-      let shape    = "dot";
+      let baseText;
+      let fill;
+      let shape;
 
       if (state === TIMER_STATE.COUNTING) {
-        fill  = "yellow";
+        fill = "yellow";
         shape = "dot";
-        let label = node.windowmode === WINDOW_MODE.SLIDING ? "Oldest expires: " : "Window: ";
-        baseText = "Counting: " + liveCount() + "/" + effectiveCountLimit + " | " +
-                   label + displayTime(windowRemainingDisplay, reportingformat);
+        const label =
+          node.windowmode === WINDOW_MODE.SLIDING
+            ? "Oldest expires: "
+            : "Window: ";
+        baseText =
+          "Counting: " +
+          liveCount() +
+          "/" +
+          effectiveCountLimit +
+          " | " +
+          label +
+          displayTime(windowRemainingDisplay, reportingformat);
       } else if (state === TIMER_STATE.COOLDOWN) {
         // Deliberately short, no ignored-count detail - same brevity rule
         // as timer-events' cooldown status.
-        fill     = "yellow";
-        shape    = "dot";
-        baseText = "Cooldown: " + displayTime(cooldownRemainingDisplay, reportingformat);
+        fill = "yellow";
+        shape = "dot";
+        baseText =
+          "Cooldown: " + displayTime(cooldownRemainingDisplay, reportingformat);
       } else {
-        fill     = "green";
-        shape    = "dot";
+        fill = "green";
+        shape = "dot";
         baseText = "Ready";
       }
 
@@ -401,7 +461,7 @@ module.exports = function(RED) {
     function flashTriggered() {
       if (statusFlashTimeout) clearTimeout(statusFlashTimeout);
       node.status({ fill: "blue", shape: "dot", text: "Triggered" });
-      statusFlashTimeout = setTimeout(function() {
+      statusFlashTimeout = setTimeout(function () {
         statusFlashTimeout = null;
         refreshStatus();
       }, TRIGGER_FLASH_MS);
@@ -413,24 +473,35 @@ module.exports = function(RED) {
 
     function convertToMilliseconds(value, units) {
       switch (units) {
-        case UNITS.SECOND:      return value * 1000;
-        case UNITS.MINUTE:      return value * 1000 * 60;
-        case UNITS.HOUR:        return value * 1000 * 60 * 60;
-        case UNITS.MILLISECOND: return value;
-        default:                return value;
+        case UNITS.SECOND:
+          return value * 1000;
+        case UNITS.MINUTE:
+          return value * 1000 * 60;
+        case UNITS.HOUR:
+          return value * 1000 * 60 * 60;
+        case UNITS.MILLISECOND:
+          return value;
+        default:
+          return value;
       }
     }
 
     function normalizeUnits(units) {
-      return typeof units === 'string' ? units.toLowerCase().replace(/s$/, '') : null;
+      return typeof units === "string"
+        ? units.toLowerCase().replace(/s$/, "")
+        : null;
     }
 
     function msgValueToMs(value, units) {
       switch (units) {
-        case UNITS_INPUT.SECOND: return value * 1000;
-        case UNITS_INPUT.MINUTE: return value * 1000 * 60;
-        case UNITS_INPUT.HOUR:   return value * 1000 * 60 * 60;
-        default:                 return value;
+        case UNITS_INPUT.SECOND:
+          return value * 1000;
+        case UNITS_INPUT.MINUTE:
+          return value * 1000 * 60;
+        case UNITS_INPUT.HOUR:
+          return value * 1000 * 60 * 60;
+        default:
+          return value;
       }
     }
 
@@ -445,10 +516,10 @@ module.exports = function(RED) {
     function liveCount() {
       if (timestamps.length === 0) return 0;
       if (node.windowmode === WINDOW_MODE.FIXED) return timestamps.length;
-      let nowMS = (new Date()).getTime();
+      const nowMS = new Date().getTime();
       let count = 0;
       for (let i = 0; i < timestamps.length; i++) {
-        if ((timestamps[i] + effectiveWindowMS) > nowMS) count++;
+        if (timestamps[i] + effectiveWindowMS > nowMS) count++;
       }
       return count;
     }
@@ -460,8 +531,10 @@ module.exports = function(RED) {
      */
     function pruneTimestamps() {
       if (node.windowmode !== WINDOW_MODE.SLIDING) return;
-      let nowMS = (new Date()).getTime();
-      timestamps = timestamps.filter(function(t) { return (t + effectiveWindowMS) > nowMS; });
+      const nowMS = new Date().getTime();
+      timestamps = timestamps.filter(function (t) {
+        return t + effectiveWindowMS > nowMS;
+      });
     }
 
     /**
@@ -475,12 +548,12 @@ module.exports = function(RED) {
     function currentWindowRemaining() {
       if (timerState === TIMER_STATE.COOLDOWN) return cooldownRemainingDisplay;
       if (timestamps.length === 0) return 0;
-      let nowMS = (new Date()).getTime();
+      const nowMS = new Date().getTime();
       if (node.windowmode === WINDOW_MODE.FIXED) {
-        return Math.max(0, (timestamps[0] + effectiveWindowMS) - nowMS);
+        return Math.max(0, timestamps[0] + effectiveWindowMS - nowMS);
       }
       for (let i = 0; i < timestamps.length; i++) {
-        let remaining = (timestamps[i] + effectiveWindowMS) - nowMS;
+        const remaining = timestamps[i] + effectiveWindowMS - nowMS;
         if (remaining > 0) return remaining;
       }
       return 0;
@@ -500,20 +573,23 @@ module.exports = function(RED) {
      * with the same code.
      */
     function buildEventMessage(timerEvent, baseMsg, ignored, source) {
-      let evtMsg = RED.util.cloneMessage(baseMsg || {});
-      evtMsg.timerEvent        = timerEvent;
-      evtMsg.timerState        = timerState;
-      evtMsg.count             = liveCount();
-      evtMsg.countLimit        = effectiveCountLimit;
-      evtMsg.windowMode        = node.windowmode;
-      evtMsg.windowDuration    = effectiveWindowMS;
-      evtMsg.windowRemaining   = currentWindowRemaining();
-      evtMsg.cooldownRemaining = timerState === TIMER_STATE.COOLDOWN ? cooldownRemainingDisplay : 0;
-      evtMsg.ignoredCount      = ignoredCount;
-      evtMsg.lastIgnoredTime   = lastIgnoredTime ? lastIgnoredTime.toISOString() : null;
-      evtMsg.disabled          = disabled;
-      evtMsg.ignored           = ignored;
-      evtMsg.source            = source;
+      const evtMsg = RED.util.cloneMessage(baseMsg || {});
+      evtMsg.timerEvent = timerEvent;
+      evtMsg.timerState = timerState;
+      evtMsg.count = liveCount();
+      evtMsg.countLimit = effectiveCountLimit;
+      evtMsg.windowMode = node.windowmode;
+      evtMsg.windowDuration = effectiveWindowMS;
+      evtMsg.windowRemaining = currentWindowRemaining();
+      evtMsg.cooldownRemaining =
+        timerState === TIMER_STATE.COOLDOWN ? cooldownRemainingDisplay : 0;
+      evtMsg.ignoredCount = ignoredCount;
+      evtMsg.lastIgnoredTime = lastIgnoredTime
+        ? lastIgnoredTime.toISOString()
+        : null;
+      evtMsg.disabled = disabled;
+      evtMsg.ignored = ignored;
+      evtMsg.source = source;
       return evtMsg;
     }
 
@@ -532,10 +608,11 @@ module.exports = function(RED) {
      * to be layered onto the built message.
      */
     function dispatchEvent(timerEvent, baseMsg, ignored, source, extraProps) {
-      let evtMsg = buildEventMessage(timerEvent, baseMsg, ignored, source);
+      const evtMsg = buildEventMessage(timerEvent, baseMsg, ignored, source);
       if (extraProps) {
-        for (let key in extraProps) {
-          if (Object.prototype.hasOwnProperty.call(extraProps, key)) evtMsg[key] = extraProps[key];
+        for (const key in extraProps) {
+          if (Object.prototype.hasOwnProperty.call(extraProps, key))
+            evtMsg[key] = extraProps[key];
         }
       }
 
@@ -545,7 +622,7 @@ module.exports = function(RED) {
       }
 
       let out1 = null;
-      let out3 = evtMsg;
+      const out3 = evtMsg;
 
       if (!ignored && timerEvent === TIMER_EVENT.TRIGGERED) {
         out1 = RED.util.cloneMessage(evtMsg);
@@ -573,10 +650,18 @@ module.exports = function(RED) {
         heartbeatTimer = null;
       }
       if (node.heartbeatinterval > 0) {
-        let intervalMS = convertToMilliseconds(node.heartbeatinterval, node.heartbeatintervalunits);
+        const intervalMS = convertToMilliseconds(
+          node.heartbeatinterval,
+          node.heartbeatintervalunits,
+        );
         if (intervalMS > 0) {
-          heartbeatTimer = setInterval(function() {
-            dispatchEvent(TIMER_EVENT.QUERY, originalMsg, false, EVENT_SOURCE.INTERNAL);
+          heartbeatTimer = setInterval(function () {
+            dispatchEvent(
+              TIMER_EVENT.QUERY,
+              originalMsg,
+              false,
+              EVENT_SOURCE.INTERNAL,
+            );
           }, intervalMS);
         }
       }
@@ -606,8 +691,8 @@ module.exports = function(RED) {
       clearTimeout(windowTimeout);
       clearInterval(reportInterval);
       clearTimeout(reportMiniTimeout);
-      windowTimeout     = null;
-      reportInterval    = null;
+      windowTimeout = null;
+      reportInterval = null;
       reportMiniTimeout = null;
     }
 
@@ -625,10 +710,10 @@ module.exports = function(RED) {
       if (actualWindowDelayRemaining <= 0) actualWindowDelayRemaining = 1;
 
       if (actualWindowDelayRemaining > maxTimeout) {
-        actualWindowDelayInUse     = maxTimeout;
+        actualWindowDelayInUse = maxTimeout;
         actualWindowDelayRemaining = actualWindowDelayRemaining - maxTimeout;
       } else {
-        actualWindowDelayInUse     = actualWindowDelayRemaining;
+        actualWindowDelayInUse = actualWindowDelayRemaining;
         actualWindowDelayRemaining = 0;
       }
       windowTimeout = setTimeout(windowElapsed, actualWindowDelayInUse);
@@ -648,10 +733,10 @@ module.exports = function(RED) {
     function windowElapsed() {
       if (actualWindowDelayRemaining > 0) {
         if (actualWindowDelayRemaining > maxTimeout) {
-          actualWindowDelayInUse      = maxTimeout;
+          actualWindowDelayInUse = maxTimeout;
           actualWindowDelayRemaining -= maxTimeout;
         } else {
-          actualWindowDelayInUse     = actualWindowDelayRemaining;
+          actualWindowDelayInUse = actualWindowDelayRemaining;
           actualWindowDelayRemaining = 0;
         }
         windowTimeout = setTimeout(windowElapsed, actualWindowDelayInUse);
@@ -686,7 +771,12 @@ module.exports = function(RED) {
       refreshStatus();
       // Expiry is never externally triggered - it is always the node's own
       // clock reaching the transition moment.
-      dispatchEvent(TIMER_EVENT.WINDOWEXPIRED, originalMsg, false, EVENT_SOURCE.INTERNAL);
+      dispatchEvent(
+        TIMER_EVENT.WINDOWEXPIRED,
+        originalMsg,
+        false,
+        EVENT_SOURCE.INTERNAL,
+      );
     }
 
     /**
@@ -699,7 +789,7 @@ module.exports = function(RED) {
     function startWindowReporting() {
       clearInterval(reportInterval);
       clearTimeout(reportMiniTimeout);
-      reportInterval    = null;
+      reportInterval = null;
       reportMiniTimeout = null;
 
       windowRemainingDisplay = currentWindowRemaining();
@@ -707,20 +797,23 @@ module.exports = function(RED) {
 
       if (reporting === REPORTING.NONE) return;
 
-      if ((windowRemainingDisplay > 60000) && (reporting === REPORTING.LAST_MINUTE_SECONDS)) {
-        reportMiniTimeout = setTimeout(function() {
-          if ((windowRemainingDisplay % 60000) !== 0) {
-            windowRemainingDisplay -= (windowRemainingDisplay % 60000);
+      if (
+        windowRemainingDisplay > 60000 &&
+        reporting === REPORTING.LAST_MINUTE_SECONDS
+      ) {
+        reportMiniTimeout = setTimeout(function () {
+          if (windowRemainingDisplay % 60000 !== 0) {
+            windowRemainingDisplay -= windowRemainingDisplay % 60000;
             node.status(buildStatus(TIMER_STATE.COUNTING));
           }
 
           if (windowRemainingDisplay <= 60000) {
-            reportInterval = setInterval(function() {
+            reportInterval = setInterval(function () {
               windowRemainingDisplay -= 1000;
               node.status(buildStatus(TIMER_STATE.COUNTING));
             }, 1000);
           } else {
-            reportInterval = setInterval(function() {
+            reportInterval = setInterval(function () {
               if (windowRemainingDisplay > 60000) {
                 windowRemainingDisplay -= 60000;
                 node.status(buildStatus(TIMER_STATE.COUNTING));
@@ -728,7 +821,7 @@ module.exports = function(RED) {
               if (windowRemainingDisplay <= 60000) {
                 clearInterval(reportInterval);
                 reportInterval = null;
-                reportInterval = setInterval(function() {
+                reportInterval = setInterval(function () {
                   windowRemainingDisplay -= 1000;
                   node.status(buildStatus(TIMER_STATE.COUNTING));
                 }, 1000);
@@ -737,9 +830,8 @@ module.exports = function(RED) {
           }
           reportMiniTimeout = null;
         }, windowRemainingDisplay % 60000);
-
       } else {
-        reportInterval = setInterval(function() {
+        reportInterval = setInterval(function () {
           windowRemainingDisplay -= 1000;
           node.status(buildStatus(TIMER_STATE.COUNTING));
         }, 1000);
@@ -759,8 +851,8 @@ module.exports = function(RED) {
       clearTimeout(cooldownTimeout);
       clearInterval(cooldownReportInterval);
       clearTimeout(cooldownReportMiniTimeout);
-      cooldownTimeout           = null;
-      cooldownReportInterval    = null;
+      cooldownTimeout = null;
+      cooldownReportInterval = null;
       cooldownReportMiniTimeout = null;
     }
 
@@ -772,14 +864,22 @@ module.exports = function(RED) {
      * ticks regardless of counting/cooldown state).
      */
     function startCooldown(baseMsg) {
-      let cooldownMS = convertToMilliseconds(node.cooldownduration, node.cooldownunits);
+      const cooldownMS = convertToMilliseconds(
+        node.cooldownduration,
+        node.cooldownunits,
+      );
       if (cooldownMS <= 0) return; // cooldown disabled - caller handles the return to idle
 
-      cooldownActive           = true;
+      cooldownActive = true;
       cooldownRemainingDisplay = cooldownMS;
-      timerState               = TIMER_STATE.COOLDOWN;
+      timerState = TIMER_STATE.COOLDOWN;
       writeState();
-      dispatchEvent(TIMER_EVENT.COOLDOWNSTARTED, baseMsg, false, EVENT_SOURCE.INTERNAL);
+      dispatchEvent(
+        TIMER_EVENT.COOLDOWNSTARTED,
+        baseMsg,
+        false,
+        EVENT_SOURCE.INTERNAL,
+      );
       startCooldownTimeout();
       startCooldownReporting();
     }
@@ -787,10 +887,11 @@ module.exports = function(RED) {
     function startCooldownTimeout() {
       actualCooldownDelayRemaining = cooldownRemainingDisplay;
       if (actualCooldownDelayRemaining > maxTimeout) {
-        actualCooldownDelayInUse     = maxTimeout;
-        actualCooldownDelayRemaining = actualCooldownDelayRemaining - maxTimeout;
+        actualCooldownDelayInUse = maxTimeout;
+        actualCooldownDelayRemaining =
+          actualCooldownDelayRemaining - maxTimeout;
       } else {
-        actualCooldownDelayInUse     = actualCooldownDelayRemaining;
+        actualCooldownDelayInUse = actualCooldownDelayRemaining;
         actualCooldownDelayRemaining = 0;
       }
       cooldownTimeout = setTimeout(cooldownElapsed, actualCooldownDelayInUse);
@@ -807,20 +908,23 @@ module.exports = function(RED) {
     function startCooldownReporting() {
       if (reporting === REPORTING.NONE) return;
 
-      if ((cooldownRemainingDisplay > 60000) && (reporting === REPORTING.LAST_MINUTE_SECONDS)) {
-        cooldownReportMiniTimeout = setTimeout(function() {
-          if ((cooldownRemainingDisplay % 60000) !== 0) {
-            cooldownRemainingDisplay -= (cooldownRemainingDisplay % 60000);
+      if (
+        cooldownRemainingDisplay > 60000 &&
+        reporting === REPORTING.LAST_MINUTE_SECONDS
+      ) {
+        cooldownReportMiniTimeout = setTimeout(function () {
+          if (cooldownRemainingDisplay % 60000 !== 0) {
+            cooldownRemainingDisplay -= cooldownRemainingDisplay % 60000;
             node.status(buildStatus(TIMER_STATE.COOLDOWN));
           }
 
           if (cooldownRemainingDisplay <= 60000) {
-            cooldownReportInterval = setInterval(function() {
+            cooldownReportInterval = setInterval(function () {
               cooldownRemainingDisplay -= 1000;
               node.status(buildStatus(TIMER_STATE.COOLDOWN));
             }, 1000);
           } else {
-            cooldownReportInterval = setInterval(function() {
+            cooldownReportInterval = setInterval(function () {
               if (cooldownRemainingDisplay > 60000) {
                 cooldownRemainingDisplay -= 60000;
                 node.status(buildStatus(TIMER_STATE.COOLDOWN));
@@ -828,7 +932,7 @@ module.exports = function(RED) {
               if (cooldownRemainingDisplay <= 60000) {
                 clearInterval(cooldownReportInterval);
                 cooldownReportInterval = null;
-                cooldownReportInterval = setInterval(function() {
+                cooldownReportInterval = setInterval(function () {
                   cooldownRemainingDisplay -= 1000;
                   node.status(buildStatus(TIMER_STATE.COOLDOWN));
                 }, 1000);
@@ -837,9 +941,8 @@ module.exports = function(RED) {
           }
           cooldownReportMiniTimeout = null;
         }, cooldownRemainingDisplay % 60000);
-
       } else {
-        cooldownReportInterval = setInterval(function() {
+        cooldownReportInterval = setInterval(function () {
           cooldownRemainingDisplay -= 1000;
           node.status(buildStatus(TIMER_STATE.COOLDOWN));
         }, 1000);
@@ -855,19 +958,24 @@ module.exports = function(RED) {
     function cooldownElapsed() {
       if (actualCooldownDelayRemaining === 0) {
         clearCooldownTimers();
-        cooldownActive           = false;
+        cooldownActive = false;
         cooldownRemainingDisplay = 0;
-        timerState               = TIMER_STATE.IDLE;
+        timerState = TIMER_STATE.IDLE;
         stopHeartbeat();
         writeState();
         refreshStatus();
-        dispatchEvent(TIMER_EVENT.COOLDOWNENDED, originalMsg, false, EVENT_SOURCE.INTERNAL);
+        dispatchEvent(
+          TIMER_EVENT.COOLDOWNENDED,
+          originalMsg,
+          false,
+          EVENT_SOURCE.INTERNAL,
+        );
         return;
       } else if (actualCooldownDelayRemaining > maxTimeout) {
-        actualCooldownDelayInUse      = maxTimeout;
+        actualCooldownDelayInUse = maxTimeout;
         actualCooldownDelayRemaining -= maxTimeout;
       } else {
-        actualCooldownDelayInUse     = actualCooldownDelayRemaining;
+        actualCooldownDelayInUse = actualCooldownDelayRemaining;
         actualCooldownDelayRemaining = 0;
       }
       cooldownTimeout = setTimeout(cooldownElapsed, actualCooldownDelayInUse);
@@ -909,10 +1017,13 @@ module.exports = function(RED) {
     // -------------------------------------------------------------------------
 
     function handleInputEvent(msg) {
-      const msgPayload = typeof msg.payload === 'string' ? msg.payload.toLowerCase() : msg.payload;
-      const msgSource  = EVENT_SOURCE.EXTERNAL;
+      const msgPayload =
+        typeof msg.payload === "string"
+          ? msg.payload.toLowerCase()
+          : msg.payload;
+      const msgSource = EVENT_SOURCE.EXTERNAL;
 
-      reporting       = node.reporting;
+      reporting = node.reporting;
       reportingformat = node.reportingformat;
 
       // -- Query -----------------------------------------------------------
@@ -928,21 +1039,21 @@ module.exports = function(RED) {
       if (msgPayload === PAYLOAD.STOP) {
         if (timerState === TIMER_STATE.COOLDOWN) {
           clearCooldownTimers();
-          cooldownActive           = false;
+          cooldownActive = false;
           cooldownRemainingDisplay = 0;
-          timerState               = TIMER_STATE.IDLE;
+          timerState = TIMER_STATE.IDLE;
           stopHeartbeat();
-          ignoredCount    = 0;
+          ignoredCount = 0;
           lastIgnoredTime = null;
           writeState();
           refreshStatus();
           dispatchEvent(TIMER_EVENT.STOPPED, msg, false, msgSource);
         } else if (timerState === TIMER_STATE.COUNTING) {
           clearWindowTimers();
-          timestamps      = [];
-          timerState      = TIMER_STATE.IDLE;
+          timestamps = [];
+          timerState = TIMER_STATE.IDLE;
           stopHeartbeat();
-          ignoredCount    = 0;
+          ignoredCount = 0;
           lastIgnoredTime = null;
           writeState();
           refreshStatus();
@@ -961,10 +1072,10 @@ module.exports = function(RED) {
       if (msgPayload === PAYLOAD.RESET) {
         if (timerState === TIMER_STATE.COUNTING) {
           clearWindowTimers();
-          timestamps      = [];
-          timerState      = TIMER_STATE.IDLE;
+          timestamps = [];
+          timerState = TIMER_STATE.IDLE;
           stopHeartbeat();
-          ignoredCount    = 0;
+          ignoredCount = 0;
           lastIgnoredTime = null;
           writeState();
           refreshStatus();
@@ -1009,20 +1120,27 @@ module.exports = function(RED) {
 
       // -- Set Count Limit -----------------------------------------------------
       if (msgPayload === PAYLOAD.SETCOUNTLIMIT) {
-        let newLimit = Number(msg.setcountlimit);
+        const newLimit = Number(msg.setcountlimit);
         if (!Number.isInteger(newLimit) || newLimit < 1) {
           refreshStatus();
-          dispatchEvent(TIMER_EVENT.COUNTLIMITSET, msg, true, msgSource, { countLimitSet: msg.setcountlimit });
+          dispatchEvent(TIMER_EVENT.COUNTLIMITSET, msg, true, msgSource, {
+            countLimitSet: msg.setcountlimit,
+          });
           return;
         }
         effectiveCountLimit = newLimit;
         writeState();
         refreshStatus();
-        dispatchEvent(TIMER_EVENT.COUNTLIMITSET, msg, false, msgSource, { countLimitSet: newLimit });
+        dispatchEvent(TIMER_EVENT.COUNTLIMITSET, msg, false, msgSource, {
+          countLimitSet: newLimit,
+        });
         // Lowering the limit below (or to) the live count means the
         // requirement is already met - the Trigger fires immediately,
         // based on originalMsg (the last counted message).
-        if (timerState === TIMER_STATE.COUNTING && liveCount() >= effectiveCountLimit) {
+        if (
+          timerState === TIMER_STATE.COUNTING &&
+          liveCount() >= effectiveCountLimit
+        ) {
           fireTrigger(originalMsg, msgSource);
         }
         return;
@@ -1030,16 +1148,20 @@ module.exports = function(RED) {
 
       // -- Set Window ----------------------------------------------------------
       if (msgPayload === PAYLOAD.SETWINDOW) {
-        let winUnits = normalizeUnits(msg.setwindowunits);
-        let winMS    = msgValueToMs(Number(msg.setwindow), winUnits);
+        const winUnits = normalizeUnits(msg.setwindowunits);
+        const winMS = msgValueToMs(Number(msg.setwindow), winUnits);
         if (isNaN(winMS) || winMS <= 0) {
           refreshStatus();
-          dispatchEvent(TIMER_EVENT.WINDOWSET, msg, true, msgSource, { windowSet: msg.setwindow });
+          dispatchEvent(TIMER_EVENT.WINDOWSET, msg, true, msgSource, {
+            windowSet: msg.setwindow,
+          });
           return;
         }
         effectiveWindowMS = winMS;
         writeState();
-        dispatchEvent(TIMER_EVENT.WINDOWSET, msg, false, msgSource, { windowSet: winMS });
+        dispatchEvent(TIMER_EVENT.WINDOWSET, msg, false, msgSource, {
+          windowSet: winMS,
+        });
 
         // Re-evaluate a live cycle against the new window immediately.
         // Fixed: the window re-anchors from the original start - if that
@@ -1084,17 +1206,17 @@ module.exports = function(RED) {
         return;
       }
 
-      let nowMS = (new Date()).getTime();
+      const nowMS = new Date().getTime();
       pruneTimestamps();
 
-      let firstOfCycle = (timestamps.length === 0);
+      const firstOfCycle = timestamps.length === 0;
       timestamps.push(nowMS);
       originalMsg = msg;
 
       if (firstOfCycle) {
-        ignoredCount    = 0;
+        ignoredCount = 0;
         lastIgnoredTime = null;
-        timerState      = TIMER_STATE.COUNTING;
+        timerState = TIMER_STATE.COUNTING;
         startHeartbeat();
       }
 
@@ -1116,15 +1238,28 @@ module.exports = function(RED) {
     function displayTime(delayToDisplay, reportingformat) {
       delayToDisplay = delayToDisplay / 1000;
       switch (reportingformat) {
-        case REPORTING_FORMAT.SECONDS: return delayToDisplay;
-        case REPORTING_FORMAT.MINUTES: return delayToDisplay / 60;
-        case REPORTING_FORMAT.HOURS:   return delayToDisplay / 3600;
-        default:
-          let hours   = String(Math.floor(delayToDisplay / 3600)).padStart(2, "0");
+        case REPORTING_FORMAT.SECONDS:
+          return delayToDisplay;
+        case REPORTING_FORMAT.MINUTES:
+          return delayToDisplay / 60;
+        case REPORTING_FORMAT.HOURS:
+          return delayToDisplay / 3600;
+        default: {
+          const hours = String(Math.floor(delayToDisplay / 3600)).padStart(
+            2,
+            "0",
+          );
           delayToDisplay %= 3600;
-          let minutes = String(Math.floor(delayToDisplay / 60)).padStart(2, "0");
-          let seconds = String(Math.floor(delayToDisplay % 60)).padStart(2, "0");
+          const minutes = String(Math.floor(delayToDisplay / 60)).padStart(
+            2,
+            "0",
+          );
+          const seconds = String(Math.floor(delayToDisplay % 60)).padStart(
+            2,
+            "0",
+          );
           return hours + ":" + minutes + ":" + seconds;
+        }
       }
     }
 
@@ -1145,34 +1280,53 @@ module.exports = function(RED) {
         if (!fs.existsSync(path.dirname(thresholdFile))) {
           fs.mkdirSync(path.dirname(thresholdFile), { recursive: true });
         }
-        let cooldownTarget = cooldownActive
-          ? (new Date((new Date()).getTime() + cooldownRemainingDisplay)).toISOString()
+        const cooldownTarget = cooldownActive
+          ? new Date(
+              new Date().getTime() + cooldownRemainingDisplay,
+            ).toISOString()
           : null;
-        fs.writeFileSync(thresholdFile, JSON.stringify(JSON.decycle({
-          reporting:           node.reporting,
-          reportingformat:     node.reportingformat,
-          timerState:          timerState,
-          timestamps:          timestamps,
-          cooldownActive:      cooldownActive,
-          cooldownTarget:      cooldownTarget,
-          origmsg:             originalMsg !== null ? originalMsg : {},
-          disabled:            disabled,
-          ignoredCount:        ignoredCount,
-          lastIgnoredTime:     lastIgnoredTime ? lastIgnoredTime.toISOString() : null,
-          effectiveCountLimit: effectiveCountLimit,
-          effectiveWindowMS:   effectiveWindowMS
-        })));
+        fs.writeFileSync(
+          thresholdFile,
+          JSON.stringify(
+            JSON.decycle({
+              reporting: node.reporting,
+              reportingformat: node.reportingformat,
+              timerState: timerState,
+              timestamps: timestamps,
+              cooldownActive: cooldownActive,
+              cooldownTarget: cooldownTarget,
+              origmsg: originalMsg !== null ? originalMsg : {},
+              disabled: disabled,
+              ignoredCount: ignoredCount,
+              lastIgnoredTime: lastIgnoredTime
+                ? lastIgnoredTime.toISOString()
+                : null,
+              effectiveCountLimit: effectiveCountLimit,
+              effectiveWindowMS: effectiveWindowMS,
+            }),
+          ),
+        );
       } catch (error) {
-        node.error("Error writing persistent file for timer-threshold node " + node.id.toString() + "\n\n" + error.toString());
+        node.error(
+          "Error writing persistent file for timer-threshold node " +
+            node.id.toString() +
+            "\n\n" +
+            error.toString(),
+        );
       }
     }
 
     function readState() {
       try {
-        let contents = fs.readFileSync(thresholdFile).toString();
-        if (typeof contents !== 'undefined') return contents;
+        const contents = fs.readFileSync(thresholdFile).toString();
+        if (typeof contents !== "undefined") return contents;
       } catch (error) {
-        node.error("Error reading persistent file for timer-threshold node " + node.id.toString() + "\n\n" + error.toString());
+        node.error(
+          "Error reading persistent file for timer-threshold node " +
+            node.id.toString() +
+            "\n\n" +
+            error.toString(),
+        );
       }
       return -1;
     }
@@ -1181,10 +1335,15 @@ module.exports = function(RED) {
       try {
         if (fs.existsSync(thresholdFile)) fs.unlinkSync(thresholdFile);
       } catch (error) {
-        node.error("Error deleting persistent file for timer-threshold node " + node.id.toString() + "\n\n" + error.toString());
+        node.error(
+          "Error deleting persistent file for timer-threshold node " +
+            node.id.toString() +
+            "\n\n" +
+            error.toString(),
+        );
       }
     }
   }
 
   RED.nodes.registerType("timer-threshold", TimerThreshold);
-}
+};

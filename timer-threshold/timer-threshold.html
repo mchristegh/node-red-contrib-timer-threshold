@@ -17,272 +17,290 @@
 -->
 
 <script type="text/javascript">
-    RED.nodes.registerType('timer-threshold',{
-        category: 'function',
-        color:"#869869",
-        defaults: {
-            countlimit: {value:"3",required:true,validate:function(v) { return !isNaN(Number(v)) && Number(v) >= 1; }},
-            window: {value:"15",required:true,validate:RED.validators.typedInput("windowType")},
-            windowType: {value:'num'},
-            windowunits: {value:"Minute"},
-            windowmode: {value:"fixed"},
-            name: {value:""},
-            reporting: {value:"none"},
-            reportingformat: {value:"human"},
-            persist: {value:false},
-            cooldownduration: {value:"0"},
-            cooldownunits: {value:"Second"},
-            heartbeatinterval: {value:"0"},
-            heartbeatintervalunits: {value:"Second"}
+  RED.nodes.registerType("timer-threshold", {
+    category: "function",
+    color: "#869869",
+    defaults: {
+      countlimit: {
+        value: "3",
+        required: true,
+        validate: function (v) {
+          return !isNaN(Number(v)) && Number(v) >= 1;
         },
-        inputs:1,
-        outputs:3,
-        icon: "timer.png",
-        label: function() {
-            return this.name || this.countlimit + " in " + this.window + " " + this.windowunits + " Threshold";
-        },
-        labelStyle: function() {
-            return this.name?"node_label_italic":"";
-        },
-        paletteLabel: "Timer Threshold",
-        outputLabels: ["Trigger","Query","Events"],
-        oneditprepare: function() {
-            if (this.windowType == null) {
-                this.windowType = "num";
-            }
+      },
+      window: {
+        value: "15",
+        required: true,
+        validate: RED.validators.typedInput("windowType"),
+      },
+      windowType: { value: "num" },
+      windowunits: { value: "Minute" },
+      windowmode: { value: "fixed" },
+      name: { value: "" },
+      reporting: { value: "none" },
+      reportingformat: { value: "human" },
+      persist: { value: false },
+      cooldownduration: { value: "0" },
+      cooldownunits: { value: "Second" },
+      heartbeatinterval: { value: "0" },
+      heartbeatintervalunits: { value: "Second" },
+    },
+    inputs: 1,
+    outputs: 3,
+    icon: "timer.png",
+    label: function () {
+      return (
+        this.name ||
+        this.countlimit +
+          " in " +
+          this.window +
+          " " +
+          this.windowunits +
+          " Threshold"
+      );
+    },
+    labelStyle: function () {
+      return this.name ? "node_label_italic" : "";
+    },
+    paletteLabel: "Timer Threshold",
+    outputLabels: ["Trigger", "Query", "Events"],
+    oneditprepare: function () {
+      if (this.windowType == null) {
+        this.windowType = "num";
+      }
 
-            $("#node-input-windowType").val(this.windowType);
+      $("#node-input-windowType").val(this.windowType);
 
-            $("#node-input-window").typedInput({
-                default: 'num',
-                typeField: $("#node-input-windowType"),
-                types:['num','env']
-            });
+      $("#node-input-window").typedInput({
+        default: "num",
+        typeField: $("#node-input-windowType"),
+        types: ["num", "env"],
+      });
 
-            $("#node-input-window").typedInput('type', this.windowType);
+      $("#node-input-window").typedInput("type", this.windowType);
 
-            $("#node-input-windowmode").val(this.windowmode);
-            $("#node-input-reporting").val(this.reporting);
-            $("#node-input-reportingformat").val(this.reportingformat);
-            $("#node-input-cooldownunits").val(this.cooldownunits);
-            $("#node-input-heartbeatintervalunits").val(this.heartbeatintervalunits);
-        }
-    });
+      $("#node-input-windowmode").val(this.windowmode);
+      $("#node-input-reporting").val(this.reporting);
+      $("#node-input-reportingformat").val(this.reportingformat);
+      $("#node-input-cooldownunits").val(this.cooldownunits);
+      $("#node-input-heartbeatintervalunits").val(this.heartbeatintervalunits);
+    },
+  });
 </script>
 
 <script type="text/x-red" data-template-name="timer-threshold">
-    <div class="form-row">
-        <i class="fa fa-hashtag"></i>
-        <label for="node-input-countlimit"> Count Limit</label>
-        <input type="number" id="node-input-countlimit" min="1" style="width:100px">
-    </div>
-    <div class="form-row">
-        <i class="fa fa-clock-o"></i>
-        <label for="node-input-window"> Window</label>
-        <input type="hidden" id="node-input-windowType">
-        <input type="text" id="node-input-window" style="text-align:end; width:270px !important">
-    </div>
-    <div class="form-row">
-        <i class="fa fa-bars"></i>
-        <label for="node-input-windowunits"> Units</label>
-        <select id="node-input-windowunits">
-            <option value="Millisecond">Milliseconds</option>
-            <option value="Second">Seconds</option>
-            <option value="Minute">Minutes</option>
-            <option value="Hour">Hours</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <i class="fa fa-arrows-h"></i>
-        <label for="node-input-windowmode"> Window Mode</label>
-        <select id="node-input-windowmode">
-            <option value="fixed">Fixed (anchored to first message)</option>
-            <option value="sliding">Sliding (each message ages out individually)</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <i class="fa fa-heartbeat"></i>
-        <label for="node-input-reporting"> Status Reporting</label>
-        <select id="node-input-reporting">
-            <option value="none">Never</option>
-            <option value="every_second">Every Second</option>
-            <option value="last_minute_seconds">Every Minute, Last minute by seconds</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-reportingformat"> Reporting format</label>
-        <select id="node-input-reportingformat">
-            <option value="human">HH:MM:SS</option>
-            <option value="seconds">Seconds</option>
-            <option value="minutes">Minutes</option>
-            <option value="hours">Hours</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <i class="fa fa-floppy-o"></i>
-        <label style="width:auto" for="node-input-persist"> Resume on deploy/restart</label>
-        <input type="checkbox" id="node-input-persist" style="display:inline-block; width:auto; vertical-align:top;">
-    </div>
-    <hr>
-    <div class="form-row">
-        <i class="fa fa-snowflake-o"></i>
-        <label for="node-input-cooldownduration"> Cooldown Duration</label>
-        <input type="number" id="node-input-cooldownduration" min="0" style="width:100px">
-    </div>
-    <div class="form-row">
-        <label for="node-input-cooldownunits"> Cooldown Units</label>
-        <select id="node-input-cooldownunits">
-            <option value="Millisecond">Milliseconds</option>
-            <option value="Second">Seconds</option>
-            <option value="Minute">Minutes</option>
-            <option value="Hour">Hours</option>
-        </select>
-    </div>
-    <hr>
-    <div class="form-row">
-        <i class="fa fa-heart-o"></i>
-        <label for="node-input-heartbeatinterval"> Heartbeat Interval</label>
-        <input type="number" id="node-input-heartbeatinterval" min="0" style="width:100px">
-    </div>
-    <div class="form-row">
-        <label for="node-input-heartbeatintervalunits"> Heartbeat Units</label>
-        <select id="node-input-heartbeatintervalunits">
-            <option value="Millisecond">Milliseconds</option>
-            <option value="Second">Seconds</option>
-            <option value="Minute">Minutes</option>
-            <option value="Hour">Hours</option>
-        </select>
-    </div>
-    <hr>
-    <div class="form-row">
-        <i class="fa fa-tag"></i>
-        <label for="node-input-name"> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name"></input>
-    </div>
+  <div class="form-row">
+      <i class="fa fa-hashtag"></i>
+      <label for="node-input-countlimit"> Count Limit</label>
+      <input type="number" id="node-input-countlimit" min="1" style="width:100px">
+  </div>
+  <div class="form-row">
+      <i class="fa fa-clock-o"></i>
+      <label for="node-input-window"> Window</label>
+      <input type="hidden" id="node-input-windowType">
+      <input type="text" id="node-input-window" style="text-align:end; width:270px !important">
+  </div>
+  <div class="form-row">
+      <i class="fa fa-bars"></i>
+      <label for="node-input-windowunits"> Units</label>
+      <select id="node-input-windowunits">
+          <option value="Millisecond">Milliseconds</option>
+          <option value="Second">Seconds</option>
+          <option value="Minute">Minutes</option>
+          <option value="Hour">Hours</option>
+      </select>
+  </div>
+  <div class="form-row">
+      <i class="fa fa-arrows-h"></i>
+      <label for="node-input-windowmode"> Window Mode</label>
+      <select id="node-input-windowmode">
+          <option value="fixed">Fixed (anchored to first message)</option>
+          <option value="sliding">Sliding (each message ages out individually)</option>
+      </select>
+  </div>
+  <div class="form-row">
+      <i class="fa fa-heartbeat"></i>
+      <label for="node-input-reporting"> Status Reporting</label>
+      <select id="node-input-reporting">
+          <option value="none">Never</option>
+          <option value="every_second">Every Second</option>
+          <option value="last_minute_seconds">Every Minute, Last minute by seconds</option>
+      </select>
+  </div>
+  <div class="form-row">
+      <label for="node-input-reportingformat"> Reporting format</label>
+      <select id="node-input-reportingformat">
+          <option value="human">HH:MM:SS</option>
+          <option value="seconds">Seconds</option>
+          <option value="minutes">Minutes</option>
+          <option value="hours">Hours</option>
+      </select>
+  </div>
+  <div class="form-row">
+      <i class="fa fa-floppy-o"></i>
+      <label style="width:auto" for="node-input-persist"> Resume on deploy/restart</label>
+      <input type="checkbox" id="node-input-persist" style="display:inline-block; width:auto; vertical-align:top;">
+  </div>
+  <hr>
+  <div class="form-row">
+      <i class="fa fa-snowflake-o"></i>
+      <label for="node-input-cooldownduration"> Cooldown Duration</label>
+      <input type="number" id="node-input-cooldownduration" min="0" style="width:100px">
+  </div>
+  <div class="form-row">
+      <label for="node-input-cooldownunits"> Cooldown Units</label>
+      <select id="node-input-cooldownunits">
+          <option value="Millisecond">Milliseconds</option>
+          <option value="Second">Seconds</option>
+          <option value="Minute">Minutes</option>
+          <option value="Hour">Hours</option>
+      </select>
+  </div>
+  <hr>
+  <div class="form-row">
+      <i class="fa fa-heart-o"></i>
+      <label for="node-input-heartbeatinterval"> Heartbeat Interval</label>
+      <input type="number" id="node-input-heartbeatinterval" min="0" style="width:100px">
+  </div>
+  <div class="form-row">
+      <label for="node-input-heartbeatintervalunits"> Heartbeat Units</label>
+      <select id="node-input-heartbeatintervalunits">
+          <option value="Millisecond">Milliseconds</option>
+          <option value="Second">Seconds</option>
+          <option value="Minute">Minutes</option>
+          <option value="Hour">Hours</option>
+      </select>
+  </div>
+  <hr>
+  <div class="form-row">
+      <i class="fa fa-tag"></i>
+      <label for="node-input-name"> Name</label>
+      <input type="text" id="node-input-name" placeholder="Name"></input>
+  </div>
 </script>
 
 <script type="text/x-red" data-help-name="timer-threshold">
-    <p><B>General usage</B><br>
-       Triggers an output after a configured number of messages arrive within a configured time window. Designed to suppress false positives from sensor noise: rather than acting on a single threshold breach, it requires the breach to repeat N times within Y time before firing. Sibling of <i>Timer with Events</i>, sharing its event envelope and command conventions. Any incoming <code>msg</code> is counted unless it carries a recognized control command in <code>msg.payload</code>. All control commands are <b>case insensitive</b>.
-    </p>
-    <p><B>Outputs</B><br>
-      <ul>
-        <li><b>1 - Trigger</b> — fires only when the count genuinely reaches the limit within the window. Fires immediately on the message that completes the count — the node never waits for the window to close. The message is a clone of that final counted message, so its payload/topic carry through downstream.</li>
-        <li><b>2 - Query</b> — fires in response to an incoming <code>query</code> message, or automatically on each Heartbeat tick. Always carries a full status snapshot.</li>
-        <li><b>3 - Events</b> — fires for every other event, including a duplicate copy of every Trigger event. This is the only output where <code>msg.ignored</code> can be <code>true</code>, marking a message that was received but did not take effect.</li>
-      </ul>
-      Output 1 never carries an ignored message — anything that didn't truly happen only ever appears on output 3.
-    </p>
-    <p><B>Window Modes</B><br>
-      <ul>
-        <li><b>Fixed</b> — the window is anchored to the first counted message of a cycle. One shared clock: if the count reaches the limit before the clock expires, the Trigger fires; if the clock expires first, the entire count resets at once and the node returns to idle.</li>
-        <li><b>Sliding</b> — each counted message is individually relevant for the window duration after <i>its own</i> arrival, then ages out. The count can decay stepwise as individual messages age out. Intermediate decay does <b>not</b> emit an event (it is observable via status, <code>query</code>, and Heartbeat); only decay to <b>zero</b> — the last live message aging out — emits an event, since that is the counting → idle transition.</li>
-      </ul>
-      Both modes emit the same <code>windowexpired</code> event for their counting → idle transition; <code>msg.windowMode</code> distinguishes them if a consumer cares.
-    </p>
-    <p><B>Message properties on all outputs</B><br>
-      Every output message is a clone of the message that triggered it (or, for events with no live trigger of their own — window expiry, Cooldown transitions, a Heartbeat tick — a clone of the last counted message) with the following properties added. Property names deliberately match <i>Timer with Events</i> so downstream nodes can process both nodes' output with the same code:
-      <ul>
-        <li><code>msg.timerEvent</code> — the event type, see the list below</li>
-        <li><code>msg.timerState</code> — the current state: <code>idle</code>, <code>counting</code>, or <code>cooldown</code></li>
-        <li><code>msg.count</code> — the current live count</li>
-        <li><code>msg.countLimit</code> — the configured (or runtime-overridden) count limit</li>
-        <li><code>msg.windowMode</code> — <code>fixed</code> or <code>sliding</code></li>
-        <li><code>msg.windowDuration</code> — the window length in milliseconds</li>
-        <li><code>msg.windowRemaining</code> — fixed: ms until the window expires; sliding: ms until the <b>oldest</b> live message ages out; Cooldown time remaining while in Cooldown; <code>0</code> when idle</li>
-        <li><code>msg.cooldownRemaining</code> — ms left in Cooldown, <code>0</code> otherwise</li>
-        <li><code>msg.ignoredCount</code> — messages ignored (not counted) during the current Cooldown/Disabled period</li>
-        <li><code>msg.lastIgnoredTime</code> — ISO 8601 timestamp of the last ignored message, or <code>null</code></li>
-        <li><code>msg.disabled</code> — current disabled state as a boolean</li>
-        <li><code>msg.ignored</code> — <code>true</code> if this message was received but did not take effect (always <code>false</code> on outputs 1 and 2)</li>
-        <li><code>msg.source</code> — <code>"external"</code> if a live incoming message triggered this event, or <code>"internal"</code> if the node itself triggered it (window expiry, decay-to-zero, Cooldown transitions, a Heartbeat tick)</li>
-      </ul>
-    </p>
-    <p><B>Event types (<code>msg.timerEvent</code>)</B><br>
-      <ul>
-        <li><code>counted</code> — a message incremented the count (output 3), or a blocked count attempt during Cooldown or while Disabled (<code>ignored:true</code>). The first counted message of a cycle is distinguishable by <code>msg.count = 1</code> — there is no separate "cycle started" event. The message that completes the count emits only <code>triggered</code>, not an additional <code>counted</code>.</li>
-        <li><code>triggered</code> — the count reached the limit (output 1 + 3). Fires exactly once per cycle.</li>
-        <li><code>windowexpired</code> — the counting → idle transition without a Trigger: the fixed window closed, or the sliding count decayed to zero (output 3 only)</li>
-        <li><code>stopped</code> — the cycle or Cooldown was stopped via the <code>stop</code> command, or a redundant stop while idle (<code>ignored:true</code>) (output 3 only)</li>
-        <li><code>reset</code> — the count was wiped via the <code>reset</code> command, or a blocked/redundant reset (<code>ignored:true</code>) (output 3 only)</li>
-        <li><code>disabled</code> / <code>enabled</code> — counting blocked/re-allowed, or a redundant attempt (<code>ignored:true</code>) (output 3 only)</li>
-        <li><code>countlimitset</code> — the count limit was set, or an invalid attempt. <code>msg.countLimitSet</code> contains the value (attempted or applied) (output 3 only)</li>
-        <li><code>windowset</code> — the window duration was set, or an invalid attempt. <code>msg.windowSet</code> contains the value (attempted or applied) in milliseconds (output 3 only)</li>
-        <li><code>query</code> — a status snapshot, either requested via a <code>query</code> message or produced by a Heartbeat tick (output 2 only)</li>
-        <li><code>cooldownstarted</code> — a Cooldown period began following a Trigger (output 3 only)</li>
-        <li><code>cooldownended</code> — a Cooldown period completed naturally (output 3 only). This does <b>not</b> re-fire the Trigger — it was already reported once when the count originally hit the limit</li>
-      </ul>
-    </p>
-    <p><B>Control Commands</B><br>
-      All control commands are case insensitive. Any message whose payload is <b>not</b> a recognized command is a count candidate. The following commands are supported:
-      <ul>
-        <li><code>stop</code> — the universal escape hatch. While counting: wipes the count, returns to idle. During Cooldown: cancels the Cooldown immediately — the only way to cut a Cooldown short. While idle: <code>ignored:true</code>.</li>
-        <li><code>reset</code> — wipes the count back to 0 but stays armed — the next message becomes count 1. Unlike <code>stop</code>, it does <b>not</b> cancel a Cooldown (<code>ignored:true</code> during Cooldown). While idle: <code>ignored:true</code>.</li>
-        <li><code>query</code> — returns a full state snapshot on output 2 without affecting the node</li>
-        <li><code>disable</code> — blocks messages from being counted. An in-flight window is left to expire/decay naturally — <code>disable</code> does not wipe it. All commands still work while disabled.</li>
-        <li><code>enable</code> — re-allows counting. Has no effect on an active Cooldown.</li>
-        <li><code>setcountlimit</code> — sets the count limit for the current and future cycles. Requires <code>msg.setcountlimit</code>, must be a positive integer. If the live count already meets the new lower limit, the Trigger fires immediately.</li>
-        <li><code>setwindow</code> — sets the window duration. Requires <code>msg.setwindow</code> in milliseconds. Optionally set <code>msg.setwindowunits</code> ("milliseconds", "seconds", "minutes", "hours", singular or plural, any case) to override units. Must be positive. Applies immediately: fixed mode re-anchors from the original window start (expiring the cycle right away if the new window has already passed); sliding mode re-prunes against the new duration.</li>
-      </ul>
-      Blocked/invalid attempts include the attempted value on the event message so downstream consumers can see what was rejected.
-    </p>
-    <p><B>Cooldown</B><br>
-      Optionally configure a <i>Cooldown Duration</i> to block counting for a fixed period after each Trigger — preventing rapid re-triggering from a noisy source.
-      <ul>
-        <li>Set to <code>0</code> (default) to disable — which <b>is</b> simple-reset behavior: the node is immediately ready for a new cycle after each Trigger</li>
-        <li>The sequence is: <code>counting</code> → Trigger (output 1 + 3, fires once) → <code>cooldown</code> (output 3: <code>cooldownstarted</code>) → cooldown ends → <code>idle</code> (output 3: <code>cooldownended</code>)</li>
-        <li>Count candidates during Cooldown are discarded (not counted, not queued) and routed to output 3 with <code>msg.timerEvent = "counted"</code> and <code>msg.ignored = true</code></li>
-        <li>Sending <code>stop</code> during Cooldown cancels it immediately — the only way to cut a Cooldown short. <code>reset</code> and <code>enable</code> have no effect on it.</li>
-        <li>Heartbeat continues ticking normally during Cooldown</li>
-        <li>A <code>query</code> during Cooldown reports <code>msg.timerState = "cooldown"</code> with <code>msg.windowRemaining</code> and <code>msg.cooldownRemaining</code> reflecting the time left</li>
-        <li>Cooldown is persisted and resumed across deploy/restart if <i>Resume on deploy/restart</i> is enabled</li>
-      </ul>
-    </p>
-    <p><B>Heartbeat</B><br>
-      Optionally configure a <i>Heartbeat Interval</i> to have the node automatically produce a status snapshot on output 2 (Query) at a fixed, regular cadence while a cycle is active — useful for external monitoring of the decaying count in sliding mode, or watchdog systems.
-      <ul>
-        <li>Set to <code>0</code> (default) to disable</li>
-        <li>The heartbeat starts when a counting cycle begins (the first counted message) and fires on a fixed schedule</li>
-        <li>It keeps ticking through <code>counting</code> and <code>cooldown</code>, and stops when the node returns to <code>idle</code> (window expiry, <code>stop</code>, <code>reset</code>, or Cooldown ending)</li>
-        <li>The schedule is <b>not</b> affected by reset, setwindow, setcountlimit, or blocked messages — it ticks independently on its own fixed interval once started</li>
-        <li>Each tick produces a normal Query-output message with <code>msg.source = "internal"</code></li>
-        <li>After a persisted restart, the heartbeat restarts fresh from that point rather than resuming the original schedule</li>
-      </ul>
-    </p>
-    <p><B>Status Reporting</B><br>
-      The <i>Status Reporting</i> option controls only the colored status text shown below the node in the editor — it never produces an output message (that role is served by the Query output, manually or via Heartbeat). Options:
-      <ul>
-        <li>Never (default)</li>
-        <li>Every Second</li>
-        <li>Every Minute, Last minute by seconds — decrements by the minute until 1 minute remains, then every second (same adaptive cadence as <i>Timer with Events</i>)</li>
-      </ul>
-      Status by state:
-      <ul>
-        <li>Idle: <code>Ready</code> (green dot)</li>
-        <li>Counting, fixed mode: <code>Counting: 2/3 | Window: 00:12:30</code> (yellow dot)</li>
-        <li>Counting, sliding mode: <code>Counting: 2/3 | Oldest expires: 00:01:42</code> (yellow dot) — the countdown shown is the time until the oldest live message ages out, the moment the displayed count will next change</li>
-        <li>Cooldown: <code>Cooldown: 00:02:30</code> (yellow dot)</li>
-        <li>Just triggered: a brief <code>Triggered</code> flash (blue dot), then the Cooldown or idle status</li>
-        <li>Disabled: grey ring with <code>Disabled | </code> prefixed to the normal status text; during Cooldown just <code>Disabled</code></li>
-      </ul>
-      The format is defined by the <i>Reporting Format</i> option: hh:mm:ss (default), or the total number of seconds, minutes, or hours.
-    </p>
-    <p><B>Querying the node</B><br>
-      Send a message with <code>msg.payload</code> of <code>query</code> (any case) to get a full snapshot of the current state on output 2. The node is not affected in any way by a query message. <code>msg.source</code> will be <code>"external"</code> for a manually requested query, or <code>"internal"</code> for one produced by a Heartbeat tick.
-    </p>
-    <p><b>Resume on deploy/restart</b><br>
-      This option is <b>DISABLED</b> by default. If you <i>ENABLE</i> it (check the checkbox) then the node's state is saved to disk on every meaningful change and restored when Node-RED restarts or the flow is redeployed:
-      <ul>
-        <li><b>Sliding restore:</b> the full set of counted message timestamps is restored and pruned against the current wall clock — messages that aged out during the downtime simply fall away. If live messages remain, the node resumes counting at the correct decayed count; if none remain, it settles to idle. No event is emitted either way.</li>
-        <li><b>Fixed restore:</b> the window's remaining time is recalculated from the original anchor. If the window already expired during downtime, the node settles to idle silently (no retroactive <code>windowexpired</code> event — the restore itself is not a live transition). If less than 3 seconds remain, the remaining window is randomized to 3-8 seconds — the same anti-flood rule as <i>Timer with Events</i>.</li>
-        <li><b>Cooldown restore:</b> restores directly into <code>cooldown</code> at the recalculated remaining time (randomized to 3-8 seconds if negligible); Heartbeat restarts fresh.</li>
-        <li><b>A restore never fires the Trigger output</b>, even if the persisted count already met the limit — the Trigger only ever fires on a live counted message.</li>
-        <li><code>disabled</code> state, runtime overrides (<code>setcountlimit</code> / <code>setwindow</code>), and the ignored-message context also persist and restore, even when the node is idle.</li>
-      </ul>
-      <br>
-      This persistence is <b>not</b> related to "Persistent Context" (the contextStorage option in <code>settings.js</code>). When the "Resume" option is enabled, the node stores its state in a <code>timerthreshold-timers</code> subdirectory of <i>userDir</i> (where <i>userDir</i> is defined in <code>settings.js</code>). If <i>userDir</i> is not explicitly defined, it defaults to a directory called <code>.node-red</code> in your home user directory. The files in this directory will be created/destroyed as needed by the node.
-    </p>
-    <p><b>Use case example</b><br>
-      A humidity sensor fluctuates around 55%. Wire a threshold/switch node (emitting a message on each exceedance) into this node configured with Count Limit 3, Window 15 Minutes. An alert fires on output 1 only when the sensor exceeds 55% three times within 15 minutes — a single brief spike never triggers. Add a Cooldown of 1 Hour to prevent repeated alerts while the condition persists.
-    </p>
+  <p><B>General usage</B><br>
+     Triggers an output after a configured number of messages arrive within a configured time window. Designed to suppress false positives from sensor noise: rather than acting on a single threshold breach, it requires the breach to repeat N times within Y time before firing. Sibling of <i>Timer with Events</i>, sharing its event envelope and command conventions. Any incoming <code>msg</code> is counted unless it carries a recognized control command in <code>msg.payload</code>. All control commands are <b>case insensitive</b>.
+  </p>
+  <p><B>Outputs</B><br>
+    <ul>
+      <li><b>1 - Trigger</b> — fires only when the count genuinely reaches the limit within the window. Fires immediately on the message that completes the count — the node never waits for the window to close. The message is a clone of that final counted message, so its payload/topic carry through downstream.</li>
+      <li><b>2 - Query</b> — fires in response to an incoming <code>query</code> message, or automatically on each Heartbeat tick. Always carries a full status snapshot.</li>
+      <li><b>3 - Events</b> — fires for every other event, including a duplicate copy of every Trigger event. This is the only output where <code>msg.ignored</code> can be <code>true</code>, marking a message that was received but did not take effect.</li>
+    </ul>
+    Output 1 never carries an ignored message — anything that didn't truly happen only ever appears on output 3.
+  </p>
+  <p><B>Window Modes</B><br>
+    <ul>
+      <li><b>Fixed</b> — the window is anchored to the first counted message of a cycle. One shared clock: if the count reaches the limit before the clock expires, the Trigger fires; if the clock expires first, the entire count resets at once and the node returns to idle.</li>
+      <li><b>Sliding</b> — each counted message is individually relevant for the window duration after <i>its own</i> arrival, then ages out. The count can decay stepwise as individual messages age out. Intermediate decay does <b>not</b> emit an event (it is observable via status, <code>query</code>, and Heartbeat); only decay to <b>zero</b> — the last live message aging out — emits an event, since that is the counting → idle transition.</li>
+    </ul>
+    Both modes emit the same <code>windowexpired</code> event for their counting → idle transition; <code>msg.windowMode</code> distinguishes them if a consumer cares.
+  </p>
+  <p><B>Message properties on all outputs</B><br>
+    Every output message is a clone of the message that triggered it (or, for events with no live trigger of their own — window expiry, Cooldown transitions, a Heartbeat tick — a clone of the last counted message) with the following properties added. Property names deliberately match <i>Timer with Events</i> so downstream nodes can process both nodes' output with the same code:
+    <ul>
+      <li><code>msg.timerEvent</code> — the event type, see the list below</li>
+      <li><code>msg.timerState</code> — the current state: <code>idle</code>, <code>counting</code>, or <code>cooldown</code></li>
+      <li><code>msg.count</code> — the current live count</li>
+      <li><code>msg.countLimit</code> — the configured (or runtime-overridden) count limit</li>
+      <li><code>msg.windowMode</code> — <code>fixed</code> or <code>sliding</code></li>
+      <li><code>msg.windowDuration</code> — the window length in milliseconds</li>
+      <li><code>msg.windowRemaining</code> — fixed: ms until the window expires; sliding: ms until the <b>oldest</b> live message ages out; Cooldown time remaining while in Cooldown; <code>0</code> when idle</li>
+      <li><code>msg.cooldownRemaining</code> — ms left in Cooldown, <code>0</code> otherwise</li>
+      <li><code>msg.ignoredCount</code> — messages ignored (not counted) during the current Cooldown/Disabled period</li>
+      <li><code>msg.lastIgnoredTime</code> — ISO 8601 timestamp of the last ignored message, or <code>null</code></li>
+      <li><code>msg.disabled</code> — current disabled state as a boolean</li>
+      <li><code>msg.ignored</code> — <code>true</code> if this message was received but did not take effect (always <code>false</code> on outputs 1 and 2)</li>
+      <li><code>msg.source</code> — <code>"external"</code> if a live incoming message triggered this event, or <code>"internal"</code> if the node itself triggered it (window expiry, decay-to-zero, Cooldown transitions, a Heartbeat tick)</li>
+    </ul>
+  </p>
+  <p><B>Event types (<code>msg.timerEvent</code>)</B><br>
+    <ul>
+      <li><code>counted</code> — a message incremented the count (output 3), or a blocked count attempt during Cooldown or while Disabled (<code>ignored:true</code>). The first counted message of a cycle is distinguishable by <code>msg.count = 1</code> — there is no separate "cycle started" event. The message that completes the count emits only <code>triggered</code>, not an additional <code>counted</code>.</li>
+      <li><code>triggered</code> — the count reached the limit (output 1 + 3). Fires exactly once per cycle.</li>
+      <li><code>windowexpired</code> — the counting → idle transition without a Trigger: the fixed window closed, or the sliding count decayed to zero (output 3 only)</li>
+      <li><code>stopped</code> — the cycle or Cooldown was stopped via the <code>stop</code> command, or a redundant stop while idle (<code>ignored:true</code>) (output 3 only)</li>
+      <li><code>reset</code> — the count was wiped via the <code>reset</code> command, or a blocked/redundant reset (<code>ignored:true</code>) (output 3 only)</li>
+      <li><code>disabled</code> / <code>enabled</code> — counting blocked/re-allowed, or a redundant attempt (<code>ignored:true</code>) (output 3 only)</li>
+      <li><code>countlimitset</code> — the count limit was set, or an invalid attempt. <code>msg.countLimitSet</code> contains the value (attempted or applied) (output 3 only)</li>
+      <li><code>windowset</code> — the window duration was set, or an invalid attempt. <code>msg.windowSet</code> contains the value (attempted or applied) in milliseconds (output 3 only)</li>
+      <li><code>query</code> — a status snapshot, either requested via a <code>query</code> message or produced by a Heartbeat tick (output 2 only)</li>
+      <li><code>cooldownstarted</code> — a Cooldown period began following a Trigger (output 3 only)</li>
+      <li><code>cooldownended</code> — a Cooldown period completed naturally (output 3 only). This does <b>not</b> re-fire the Trigger — it was already reported once when the count originally hit the limit</li>
+    </ul>
+  </p>
+  <p><B>Control Commands</B><br>
+    All control commands are case insensitive. Any message whose payload is <b>not</b> a recognized command is a count candidate. The following commands are supported:
+    <ul>
+      <li><code>stop</code> — the universal escape hatch. While counting: wipes the count, returns to idle. During Cooldown: cancels the Cooldown immediately — the only way to cut a Cooldown short. While idle: <code>ignored:true</code>.</li>
+      <li><code>reset</code> — wipes the count back to 0 but stays armed — the next message becomes count 1. Unlike <code>stop</code>, it does <b>not</b> cancel a Cooldown (<code>ignored:true</code> during Cooldown). While idle: <code>ignored:true</code>.</li>
+      <li><code>query</code> — returns a full state snapshot on output 2 without affecting the node</li>
+      <li><code>disable</code> — blocks messages from being counted. An in-flight window is left to expire/decay naturally — <code>disable</code> does not wipe it. All commands still work while disabled.</li>
+      <li><code>enable</code> — re-allows counting. Has no effect on an active Cooldown.</li>
+      <li><code>setcountlimit</code> — sets the count limit for the current and future cycles. Requires <code>msg.setcountlimit</code>, must be a positive integer. If the live count already meets the new lower limit, the Trigger fires immediately.</li>
+      <li><code>setwindow</code> — sets the window duration. Requires <code>msg.setwindow</code> in milliseconds. Optionally set <code>msg.setwindowunits</code> ("milliseconds", "seconds", "minutes", "hours", singular or plural, any case) to override units. Must be positive. Applies immediately: fixed mode re-anchors from the original window start (expiring the cycle right away if the new window has already passed); sliding mode re-prunes against the new duration.</li>
+    </ul>
+    Blocked/invalid attempts include the attempted value on the event message so downstream consumers can see what was rejected.
+  </p>
+  <p><B>Cooldown</B><br>
+    Optionally configure a <i>Cooldown Duration</i> to block counting for a fixed period after each Trigger — preventing rapid re-triggering from a noisy source.
+    <ul>
+      <li>Set to <code>0</code> (default) to disable — which <b>is</b> simple-reset behavior: the node is immediately ready for a new cycle after each Trigger</li>
+      <li>The sequence is: <code>counting</code> → Trigger (output 1 + 3, fires once) → <code>cooldown</code> (output 3: <code>cooldownstarted</code>) → cooldown ends → <code>idle</code> (output 3: <code>cooldownended</code>)</li>
+      <li>Count candidates during Cooldown are discarded (not counted, not queued) and routed to output 3 with <code>msg.timerEvent = "counted"</code> and <code>msg.ignored = true</code></li>
+      <li>Sending <code>stop</code> during Cooldown cancels it immediately — the only way to cut a Cooldown short. <code>reset</code> and <code>enable</code> have no effect on it.</li>
+      <li>Heartbeat continues ticking normally during Cooldown</li>
+      <li>A <code>query</code> during Cooldown reports <code>msg.timerState = "cooldown"</code> with <code>msg.windowRemaining</code> and <code>msg.cooldownRemaining</code> reflecting the time left</li>
+      <li>Cooldown is persisted and resumed across deploy/restart if <i>Resume on deploy/restart</i> is enabled</li>
+    </ul>
+  </p>
+  <p><B>Heartbeat</B><br>
+    Optionally configure a <i>Heartbeat Interval</i> to have the node automatically produce a status snapshot on output 2 (Query) at a fixed, regular cadence while a cycle is active — useful for external monitoring of the decaying count in sliding mode, or watchdog systems.
+    <ul>
+      <li>Set to <code>0</code> (default) to disable</li>
+      <li>The heartbeat starts when a counting cycle begins (the first counted message) and fires on a fixed schedule</li>
+      <li>It keeps ticking through <code>counting</code> and <code>cooldown</code>, and stops when the node returns to <code>idle</code> (window expiry, <code>stop</code>, <code>reset</code>, or Cooldown ending)</li>
+      <li>The schedule is <b>not</b> affected by reset, setwindow, setcountlimit, or blocked messages — it ticks independently on its own fixed interval once started</li>
+      <li>Each tick produces a normal Query-output message with <code>msg.source = "internal"</code></li>
+      <li>After a persisted restart, the heartbeat restarts fresh from that point rather than resuming the original schedule</li>
+    </ul>
+  </p>
+  <p><B>Status Reporting</B><br>
+    The <i>Status Reporting</i> option controls only the colored status text shown below the node in the editor — it never produces an output message (that role is served by the Query output, manually or via Heartbeat). Options:
+    <ul>
+      <li>Never (default)</li>
+      <li>Every Second</li>
+      <li>Every Minute, Last minute by seconds — decrements by the minute until 1 minute remains, then every second (same adaptive cadence as <i>Timer with Events</i>)</li>
+    </ul>
+    Status by state:
+    <ul>
+      <li>Idle: <code>Ready</code> (green dot)</li>
+      <li>Counting, fixed mode: <code>Counting: 2/3 | Window: 00:12:30</code> (yellow dot)</li>
+      <li>Counting, sliding mode: <code>Counting: 2/3 | Oldest expires: 00:01:42</code> (yellow dot) — the countdown shown is the time until the oldest live message ages out, the moment the displayed count will next change</li>
+      <li>Cooldown: <code>Cooldown: 00:02:30</code> (yellow dot)</li>
+      <li>Just triggered: a brief <code>Triggered</code> flash (blue dot), then the Cooldown or idle status</li>
+      <li>Disabled: grey ring with <code>Disabled | </code> prefixed to the normal status text; during Cooldown just <code>Disabled</code></li>
+    </ul>
+    The format is defined by the <i>Reporting Format</i> option: hh:mm:ss (default), or the total number of seconds, minutes, or hours.
+  </p>
+  <p><B>Querying the node</B><br>
+    Send a message with <code>msg.payload</code> of <code>query</code> (any case) to get a full snapshot of the current state on output 2. The node is not affected in any way by a query message. <code>msg.source</code> will be <code>"external"</code> for a manually requested query, or <code>"internal"</code> for one produced by a Heartbeat tick.
+  </p>
+  <p><b>Resume on deploy/restart</b><br>
+    This option is <b>DISABLED</b> by default. If you <i>ENABLE</i> it (check the checkbox) then the node's state is saved to disk on every meaningful change and restored when Node-RED restarts or the flow is redeployed:
+    <ul>
+      <li><b>Sliding restore:</b> the full set of counted message timestamps is restored and pruned against the current wall clock — messages that aged out during the downtime simply fall away. If live messages remain, the node resumes counting at the correct decayed count; if none remain, it settles to idle. No event is emitted either way.</li>
+      <li><b>Fixed restore:</b> the window's remaining time is recalculated from the original anchor. If the window already expired during downtime, the node settles to idle silently (no retroactive <code>windowexpired</code> event — the restore itself is not a live transition). If less than 3 seconds remain, the remaining window is randomized to 3-8 seconds — the same anti-flood rule as <i>Timer with Events</i>.</li>
+      <li><b>Cooldown restore:</b> restores directly into <code>cooldown</code> at the recalculated remaining time (randomized to 3-8 seconds if negligible); Heartbeat restarts fresh.</li>
+      <li><b>A restore never fires the Trigger output</b>, even if the persisted count already met the limit — the Trigger only ever fires on a live counted message.</li>
+      <li><code>disabled</code> state, runtime overrides (<code>setcountlimit</code> / <code>setwindow</code>), and the ignored-message context also persist and restore, even when the node is idle.</li>
+    </ul>
+    <br>
+    This persistence is <b>not</b> related to "Persistent Context" (the contextStorage option in <code>settings.js</code>). When the "Resume" option is enabled, the node stores its state in a <code>timerthreshold-timers</code> subdirectory of <i>userDir</i> (where <i>userDir</i> is defined in <code>settings.js</code>). If <i>userDir</i> is not explicitly defined, it defaults to a directory called <code>.node-red</code> in your home user directory. The files in this directory will be created/destroyed as needed by the node.
+  </p>
+  <p><b>Use case example</b><br>
+    A humidity sensor fluctuates around 55%. Wire a threshold/switch node (emitting a message on each exceedance) into this node configured with Count Limit 3, Window 15 Minutes. An alert fires on output 1 only when the sensor exceeds 55% three times within 15 minutes — a single brief spike never triggers. Add a Cooldown of 1 Hour to prevent repeated alerts while the condition persists.
+  </p>
 </script>
