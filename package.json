@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-timer-threshold",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "A Node-RED node that triggers an output after a configured number of messages arrive within a fixed or sliding time window. Suppresses false positives from sensor noise by requiring repeated threshold breaches before acting. Sibling of timer-events, sharing its event envelope and command conventions.",
     "dependencies": {},
     "repository": {
@@ -24,7 +24,10 @@
     },
     "scripts": {
         "test": "node test-scripts/test-harness.js",
-        "prepublishOnly": "node test-scripts/test-harness.js"
+        "prepublishOnly": "node test-scripts/test-harness.js",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
     },
     "node-red": {
         "version": ">=2.0.0",
